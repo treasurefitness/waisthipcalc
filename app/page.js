@@ -38,10 +38,33 @@ export default function CardWithFormInputs() {
     }
   };
 
+  const sendEmailToZapier = async (email) => {
+    try {
+      const response = await fetch(
+        "https://hooks.zapier.com/hooks/catch/8441989/3jq2s1o/",
+        {
+          method: "POST",
+          body: JSON.stringify({ email }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to send email to Zapier");
+      }
+
+      console.log("Email sent successfully to Zapier");
+    } catch (error) {
+      console.error("Error sending email to Zapier:", error.message);
+    }
+  };
+
   const handleSubmitEmail = (e) => {
     e.preventDefault();
-    // Submit email to Kajabi or other backend
-    console.log("Email submitted:", email);
+
+    // Submit email to Zapier webhook
+    sendEmailToZapier(email).catch((error) =>
+      console.error("Error sending email to Zapier:", error.message)
+    );
     setSubmittedEmail(true);
   };
 
@@ -85,7 +108,10 @@ export default function CardWithFormInputs() {
               onSubmit={handleSubmitEmail}
             >
               <div className="mb-2">
-                <Label htmlFor="email" value="Enter your email:" />
+                <Label
+                  htmlFor="email"
+                  value="Please enter your email to get your measurements:"
+                />
                 <TextInput
                   id="email"
                   required
