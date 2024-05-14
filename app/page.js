@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Profile from "./Treasure_Fitness_Logo.png";
 import { Button, Card, Label, TextInput } from "flowbite-react";
@@ -12,6 +12,22 @@ export default function CardWithFormInputs() {
   const [email, setEmail] = useState("");
   const [showEmailField, setShowEmailField] = useState(false);
   const [submittedEmail, setSubmittedEmail] = useState(false);
+
+  useEffect(() => {
+    let timer;
+    if (submittedEmail && ratio) {
+      // If email is submitted and ratio is calculated, set a timer to reset after 5 seconds
+      timer = setTimeout(() => {
+        setRatio(null);
+        setHealthRisk(null);
+        setShowEmailField(false);
+        setSubmittedEmail(false);
+      }, 7000);
+    }
+
+    // Clean up the timer
+    return () => clearTimeout(timer);
+  }, [submittedEmail, ratio]);
 
   const handleSubmitMeasurements = (e) => {
     e.preventDefault();
