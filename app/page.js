@@ -12,22 +12,38 @@ export default function CardWithFormInputs() {
   const [email, setEmail] = useState("");
   const [showEmailField, setShowEmailField] = useState(false);
   const [submittedEmail, setSubmittedEmail] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+  const [emailSuccess, setEmailSuccess] = useState(false);
+  const [emailError, setEmailError] = useState(false);
 
   useEffect(() => {
     let timer;
-    if (submittedEmail && ratio) {
-      // If email is submitted and ratio is calculated, set a timer to reset after 5 seconds
+    if (emailSent && ratio) {
+      // If email is sent and ratio is calculated, set a timer to reset after 5 seconds
       timer = setTimeout(() => {
         setRatio(null);
         setHealthRisk(null);
         setShowEmailField(false);
         setSubmittedEmail(false);
-      }, 7000);
+        setEmailSent(false);
+        setEmailSuccess(false);
+        setEmailError(false);
+      }, 5000);
+    }
+
+    if (emailSuccess) {
+      // If email is successfully sent, set a timer to reset after 4 seconds
+      timer = setTimeout(() => {
+        setEmailSuccess(false);
+        setShowEmailField(false);
+        setSubmittedEmail(false);
+        setEmail("");
+      }, 4000);
     }
 
     // Clean up the timer
     return () => clearTimeout(timer);
-  }, [submittedEmail, ratio]);
+  }, [emailSent, ratio, emailSuccess]);
 
   const handleSubmitMeasurements = (e) => {
     e.preventDefault();
@@ -54,13 +70,13 @@ export default function CardWithFormInputs() {
     }
   };
 
-  const sendEmailToZapier = async (email) => {
+  const sendEmailToZapier = async (email, ratio, healthRisk) => {
     try {
       const response = await fetch(
         "https://hooks.zapier.com/hooks/catch/8441989/3jq2s1o/",
         {
           method: "POST",
-          body: JSON.stringify({ email }),
+          body: JSON.stringify({ email, ratio, healthRisk }),
         }
       );
 
@@ -69,16 +85,19 @@ export default function CardWithFormInputs() {
       }
 
       console.log("Email sent successfully to Zapier");
+      setEmailSuccess(true);
     } catch (error) {
       console.error("Error sending email to Zapier:", error.message);
+      setEmailSuccess(false);
+      setEmailError(true); // Display error message if email fails to send
     }
   };
 
   const handleSubmitEmail = (e) => {
     e.preventDefault();
 
-    // Submit email to Zapier webhook
-    sendEmailToZapier(email).catch((error) =>
+    // Submit email, ratio, and health risk to Zapier webhook
+    sendEmailToZapier(email, ratio, healthRisk).catch((error) =>
       console.error("Error sending email to Zapier:", error.message)
     );
     setSubmittedEmail(true);
@@ -96,26 +115,33 @@ export default function CardWithFormInputs() {
             className="flex flex-col w-full gap-4 p-6"
             onSubmit={handleSubmitMeasurements}
           >
-            <div className="mb-2">
-              <Label htmlFor="waist" value="Waist Measurement (in inches):" />
-              <TextInput
-                id="waist"
-                required
-                type="number"
-                value={waist}
-                onChange={(e) => setWaist(e.target.value)}
-              />
-            </div>
-            <div className="mb-2">
-              <Label htmlFor="hip" value="Hip Measurement (in inches):" />
-              <TextInput
-                id="hip"
-                required
-                type="number"
-                value={hip}
-                onChange={(e) => setHip(e.target.value)}
-              />
-            </div>
+            {!showEmailField && (
+              <>
+                <div className="mb-2">
+                  <Label
+                    htmlFor="waist"
+                    value="Waist Measurement (in inches):"
+                  />
+                  <TextInput
+                    id="waist"
+                    required
+                    type="number"
+                    value={waist}
+                    onChange={(e) => setWaist(e.target.value)}
+                  />
+                </div>
+                <div className="mb-2">
+                  <Label htmlFor="hip" value="Hip Measurement (in inches):" />
+                  <TextInput
+                    id="hip"
+                    required
+                    type="number"
+                    value={hip}
+                    onChange={(e) => setHip(e.target.value)}
+                  />
+                </div>
+              </>
+            )}
             {!showEmailField && <Button type="submit">Calculate Ratio</Button>}
           </form>
           {showEmailField && !submittedEmail && (
@@ -139,17 +165,14 @@ export default function CardWithFormInputs() {
               <Button type="submit">Submit Email</Button>
             </form>
           )}
-          {submittedEmail && (
-            <div className="pt-6 text-center">
-              <p className="pt-3">Hey sis 👋</p>
-              <p className="pt-3">Your Waist-to-Hip Ratio is:</p>
-              <p className="font-bold text-red-600">{ratio}</p>
-              {healthRisk && (
-                <p className="pb-2 font-bold">
-                  <span className="text-black">Health Risk: </span>{" "}
-                  <span className="text-red-600">{healthRisk}</span>
-                </p>
-              )}
+          {emailSuccess && (
+            <div className="pt-6 text-center text-green-600">
+              <p>Email submitted successfully! Check your inbox.</p>
+            </div>
+          )}
+          {emailError && (
+            <div className="pt-6 text-center text-red-600">
+              <p>Email not submitted. Please try again later.</p>
             </div>
           )}
         </div>
